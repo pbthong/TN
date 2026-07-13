@@ -244,26 +244,75 @@
 </main>
 
 <script>
-    // --- Data Management ---
-    let words = JSON.parse(localStorage.getItem('rusWords')) || [
-        { rus: 'Привет', vie: 'Xin chào', group: 'Chào hỏi' },
-        { rus: 'Спасибо', vie: 'Cảm ơn', group: 'Chào hỏi' }
-    ];
+    // === CẤU HÌNH JSONBIN CỦA BẠN TẠI ĐÂY ===
+    const BIN_ID = 'ĐIỀN_BIN_ID_CỦA_BẠN_VÀO_ĐÂY';
+    const MASTER_KEY = 'ĐIỀN_MASTER_KEY_CỦA_BẠN_VÀO_ĐÂY';
+    // =======================================
+
+    let words = [];
     let filtered = [];
     let currentIndex = 0;
     let score = 0;
     let currentQuizWord = "";
 
-    // Load ban đầu
-    window.onload = () => {
-        updateGroups();
-        renderTable();
+    // Tự động tải dữ liệu từ trên mạng về khi vừa mở trang web
+    window.onload = async () => {
+        await loadRemoteData();
     };
 
-    function save() {
+    // Hàm tải dữ liệu từ JSONBin
+    async function loadRemoteData() {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">🔄 Đang tải dữ liệu từ đám mây...</td></tr>';
+        
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                method: 'GET',
+                headers: {
+                    'X-Master-Key': MASTER_KEY
+                }
+            });
+            if (!response.ok) throw new Error('Không thể kết nối đến JSONBin');
+            
+            const resData = await response.json();
+            words = resData.record; // Lấy mảng dữ liệu từ trường record của JSONBin
+            
+            updateGroups();
+            renderTable();
+        } catch (error) {
+            alert('Lỗi tải dữ liệu từ xa! Web sẽ tạm thời dùng dữ liệu dự phòng trong máy.');
+            console.error(error);
+            words = JSON.parse(localStorage.getItem('rusWords')) || [];
+            updateGroups();
+            renderTable();
+        }
+    }
+
+    // Hàm tự động lưu đè dữ liệu mới lên JSONBin khi có thay đổi (Thêm/Xóa)
+    async function save() {
+        // Lưu một bản dự phòng tại máy đang dùng cho an toàn
         localStorage.setItem('rusWords', JSON.stringify(words));
+        
+        // Cập nhật giao diện tạm thời để người dùng thấy nhanh
         updateGroups();
         renderTable();
+
+        // Gửi dữ liệu cập nhật thẳng lên đám mây JSONBin
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': MASTER_KEY
+                },
+                body: JSON.stringify(words)
+            });
+            if (!response.ok) throw new Error('Lưu lên đám mây thất bại');
+            console.log('Đã đồng bộ thành công lên JSONBin.io');
+        } catch (error) {
+            alert('Lỗi: Dữ liệu đã lưu ở máy này nhưng chưa đồng bộ được lên mạng. Hãy kiểm tra kết nối.');
+            console.error(error);
+        }
     }
 
     // --- Core Functions ---
@@ -274,7 +323,7 @@
         
         if (r && v) {
             words.push({ rus: r, vie: v, group: g });
-            save();
+            save(); // Tự động đồng bộ lên mạng
             document.getElementById('rusInput').value = '';
             document.getElementById('vieInput').value = '';
             document.getElementById('rusInput').focus();
@@ -298,15 +347,20 @@
             }
         });
         if(count > 0) {
-            save();
+            save(); // Tự động đồng bộ lên mạng
             document.getElementById('bulkInput').value = '';
-            alert(`Đã thêm ${count} từ!`);
+            alert(`Đã thêm và đồng bộ ${count} từ!`);
         }
     }
 
     function renderTable() {
         const b = document.getElementById('tableBody');
         b.innerHTML = '';
+        if (words.length === 0) {
+            b.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Chưa có từ vựng nào.</td></tr>';
+            document.getElementById('wordCount').innerText = 0;
+            return;
+        }
         [...words].reverse().forEach((w, i) => {
             const idx = words.length - 1 - i;
             b.innerHTML += `<tr>
@@ -322,27 +376,23 @@
     function deleteWord(i) {
         if(confirm('Xóa từ này?')) {
             words.splice(i, 1);
-            save();
+            save(); // Tự động đồng bộ lên mạng xóa từ
         }
     }
 
     function clearAllData() {
-        if(confirm('Cảnh báo: Xóa sạch toàn bộ từ vựng?')) {
+        if(confirm('Cảnh báo: Xóa sạch toàn bộ từ vựng trên đám mây?')) {
             words = [];
-            save();
+            save(); // Tự động đồng bộ lên mạng xóa sạch từ
         }
     }
 
-    // --- Speech ---
+    // --- Speech (Google TTS API) ---
     function speak(text) {
-         // Tạo URL gọi đến API giọng đọc của Google Dịch (tiếng Nga: tl=ru)
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru&client=tw-ob&q=${encodeURIComponent(text)}`;
-    
         const audio = new Audio(url);
-        audio.play().catch(error => {
-            console.error("Không thể phát âm thanh:", error);
-        });
-}
+        audio.play().catch(error => console.error("Không thể phát âm thanh:", error));
+    }
     function playCurrentWord() { if (filtered[currentIndex]) speak(filtered[currentIndex].rus); }
     function playQuizWord() { if (currentQuizWord) speak(currentQuizWord); }
 
@@ -455,5 +505,3 @@
         if (id === 'quiz') initQuiz();
     }
 </script>
-</body>
-</html>
