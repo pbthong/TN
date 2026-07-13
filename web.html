@@ -315,44 +315,51 @@
         }
     }
 
-    // --- Core Functions ---
-    function addWord() {
-        const r = document.getElementById('rusInput').value.trim();
-        const v = document.getElementById('vieInput').value.trim();
-        const g = document.getElementById('groupInput').value.trim() || 'Chưa phân loại';
-        
-        if (r && v) {
-            words.push({ rus: r, vie: v, group: g });
-            save(); // Tự động đồng bộ lên mạng
-            document.getElementById('rusInput').value = '';
-            document.getElementById('vieInput').value = '';
-            document.getElementById('rusInput').focus();
-        } else {
-            alert("Vui lòng nhập đủ từ tiếng Nga và tiếng Việt!");
-        }
+// Hàm hỗ trợ chuyển đổi dấu sắc thành ký tự trọng âm chuẩn tiếng Nga
+function convertToRussianAccent(text) {
+    // Thay thế dấu sắc đứng sau nguyên âm thành ký tự trọng âm \u0301
+    // Áp dụng cho cả nguyên âm thường và viết hoa: а, е, и, о, у, ы, э, ю, я
+    return text.replace(/([аеиоуыэюяаеиоуыэюя])'/gi, '$1\u0301');
+}
+
+function addWord() {
+    let r = document.getElementById('rusInput').value.trim();
+    const v = document.getElementById('vieInput').value.trim();
+    const g = document.getElementById('groupInput').value.trim() || 'Chưa phân loại';
+    
+    if (r && v) {
+        r = convertToRussianAccent(r); // Tự động xử lý trọng âm trước khi lưu
+        words.push({ rus: r, vie: v, group: g });
+        save();
+        document.getElementById('rusInput').value = '';
+        document.getElementById('vieInput').value = '';
+        document.getElementById('rusInput').focus();
+    } else {
+        alert("Vui lòng nhập đủ từ tiếng Nga và tiếng Việt!");
     }
+}
 
-    function addBulk() {
-        const text = document.getElementById('bulkInput').value;
-        const g = document.getElementById('groupInput').value.trim() || 'Chưa phân loại';
-        if (!text.trim()) return;
+function addBulk() {
+    const text = document.getElementById('bulkInput').value;
+    const g = document.getElementById('groupInput').value.trim() || 'Chưa phân loại';
+    if (!text.trim()) return;
 
-        const lines = text.split('\n');
-        let count = 0;
-        lines.forEach(line => {
-            let p = line.split(/[-:\t]/);
-            if (p.length >= 2) {
-                words.push({ rus: p[0].trim(), vie: p[1].trim(), group: g });
-                count++;
-            }
-        });
-        if(count > 0) {
-            save(); // Tự động đồng bộ lên mạng
-            document.getElementById('bulkInput').value = '';
-            alert(`Đã thêm và đồng bộ ${count} từ!`);
+    const lines = text.split('\n');
+    let count = 0;
+    lines.forEach(line => {
+        let p = line.split(/[-:\t]/);
+        if (p.length >= 2) {
+            let r = convertToRussianAccent(p[0].trim()); // Tự động xử lý trọng âm khi import hàng loạt
+            words.push({ rus: r, vie: p[1].trim(), group: g });
+            count++;
         }
+    });
+    if(count > 0) {
+        save();
+        document.getElementById('bulkInput').value = '';
+        alert(`Đã thêm ${count} từ!`);
     }
-
+}
     function renderTable() {
         const b = document.getElementById('tableBody');
         b.innerHTML = '';
