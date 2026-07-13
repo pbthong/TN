@@ -455,7 +455,7 @@
             document.getElementById('empty-msg').style.display = 'block';
         } else {
             document.getElementById('fc-main-area').style.display = 'block';
-            document.getElementById('empty-msg').style.none';
+            document.getElementById('empty-msg').style.display = 'none';
             currentIndex = 0;
             showCard();
         }
@@ -469,7 +469,6 @@
         document.getElementById('fc-index').innerText = `${currentIndex + 1} / ${filtered.length}`;
     }
 
-    // (Giữ nguyên các hàm bổ trợ giao diện bên dưới của bạn...)
     function flipCard() { document.getElementById('activeCard').classList.toggle('is-flipped'); }
     function nextCard() { currentIndex = (currentIndex + 1) % filtered.length; showCard(); }
     function prevCard() { currentIndex = (currentIndex - 1 + filtered.length) % filtered.length; showCard(); }
