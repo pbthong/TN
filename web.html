@@ -1,5 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Tiếng Nga - Russian Vocab Master</title>
+    <style>
+        :root {
+            --primary: #0039A6;
+            --danger: #D52B1E;
+            --light: #f4f4f9;
+            --dark: #333;
+            --white: #ffffff;
+            --success: #28a745;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        nav {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .nav-links button {
+            background: none;
+            border: 1px solid transparent;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        .nav-links button:hover, .nav-links button.active {
+            background-color: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+
+        .section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { color: var(--primary); border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+
+        .input-group {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bulk-group {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+        
+        textarea {
+            width: 100%; height: 100px; padding: 10px;
+            border: 1px solid #ddd; border-radius: 4px;
+            box-sizing: border-box; resize: vertical; margin-bottom: 10px;
+        }
+
+        input, select {
+            padding: 10px; border: 1px solid #ddd;
+            border-radius: 4px; font-size: 1rem; width: 100%;
+            box-sizing: border-box;
+        }
+
+        .filter-area {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button.btn-primary { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button.btn-success { background-color: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        
+        .word-list {
+            width: 100%; border-collapse: collapse; background: white;
+            border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .word-list th, .word-list td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        .word-list th { background-color: #eee; }
+        .btn-delete { background-color: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Flashcard */
+        .card-container { perspective: 1000px; width: 300px; height: 200px; margin: 30px auto; position: relative; }
+        .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 10px; cursor: pointer; }
+        .card.is-flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; border-radius: 10px; flex-direction: column; padding: 15px; box-sizing: border-box; text-align: center; }
+        .card-front { background-color: white; color: var(--primary); }
+        .card-back { background-color: var(--primary); color: white; transform: rotateY(180deg); }
+        
+        .speak-btn-card {
+            position: absolute; bottom: 10px; right: 10px;
+            background: #eee; border: none; border-radius: 50%;
+            width: 40px; height: 40px; cursor: pointer;
+            z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+
+        .card-controls { text-align: center; margin-top: 20px; }
+
+        /* Quiz */
+        .quiz-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        .question-box { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-btn { padding: 15px; background: #f0f0f0; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div style="font-size: 1.5rem; font-weight: bold;">🇷🇺 Russian Master</div>
+    <div class="nav-links">
+        <button id="btn-manage" onclick="showSection('manage')" class="active">Quản lý từ</button>
+        <button id="btn-flashcard" onclick="showSection('flashcard')">Flashcards</button>
+        <button id="btn-quiz" onclick="showSection('quiz')">Trắc nghiệm</button>
+    </div>
+</nav>
+
+<main>
+    <div class="filter-area">
+        <strong>🎯 Nhóm đang học:</strong>
+        <select id="groupFilter" onchange="handleGroupChange()">
+            <option value="all">Tất cả từ vựng</option>
+        </select>
+    </div>
+
+    <div id="manage" class="section active">
+        <h2>Thêm từ mới</h2>
+        <div class="input-group">
+            <input type="text" id="rusInput" placeholder="Tiếng Nga">
+            <input type="text" id="vieInput" placeholder="Tiếng Việt">
+            <input type="text" id="groupInput" placeholder="Nhóm" list="groupSuggestions">
+            <datalist id="groupSuggestions"></datalist>
+            <button class="btn-primary" onclick="addWord()">Thêm</button>
+        </div>
+
+        <details>
+            <summary style="cursor:pointer; color: var(--primary); font-weight:bold; margin-bottom:10px;">➕ Thêm hàng loạt</summary>
+            <div class="bulk-group">
+                <textarea id="bulkInput" placeholder="Định dạng: Nga - Việt (Mỗi từ 1 dòng)"></textarea>
+                <button class="btn-success" onclick="addBulk()">Thêm danh sách</button>
+            </div>
+        </details>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+            <h3>Danh sách (<span id="wordCount">0</span>)</h3>
+            <button onclick="clearAllData()" style="color:#999; border:none; background:none; cursor:pointer; text-decoration:underline; font-size: 0.8rem;">Xóa tất cả</button>
+        </div>
+
+        <table class="word-list">
+            <thead>
+                <tr>
+                    <th>Tiếng Nga</th>
+                    <th>Tiếng Việt</th>
+                    <th>Nhóm</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="flashcard" class="section">
+        <div id="fc-main-area">
+            <div class="card-container">
+                <div class="card" id="activeCard" onclick="flipCard()">
+                    <div class="card-face card-front">
+                        <span id="fc-rus">...</span>
+                    </div>
+                    <div class="card-face card-back">
+                        <span id="fc-vie">...</span>
+                    </div>
+                </div>
+                <button class="speak-btn-card" onclick="event.stopPropagation(); playCurrentWord();">🔊</button>
+            </div>
+            <div class="card-controls">
+                <button class="btn-primary" onclick="prevCard()">&#8592;</button>
+                <span id="fc-index" style="margin: 0 15px;">0 / 0</span>
+                <button class="btn-primary" onclick="nextCard()">&#8594;</button>
+            </div>
+        </div>
+        <div id="empty-msg" style="text-align: center; display: none; padding: 50px;">Nhóm này chưa có từ vựng.</div>
+    </div>
+
+    <div id="quiz" class="section">
+        <div id="quiz-area" class="quiz-container">
+            <div style="margin-bottom:10px;">Điểm: <span id="score" style="font-weight:bold">0</span></div>
+            <div class="question-box">
+                <h2 id="quiz-question" style="color:var(--primary); margin:0;">...</h2>
+                <button class="btn-primary" style="padding: 5px 10px;" onclick="playQuizWord()">🔊</button>
+            </div>
+            <div class="options-grid" id="quiz-options"></div>
+            <div id="quiz-feedback" style="margin-top: 15px; font-weight: bold; min-height: 20px;"></div>
+            <button class="btn-primary" style="margin-top: 20px;" onclick="generateQuiz()">Câu tiếp theo</button>
+        </div>
+        <div id="quiz-empty-msg" style="text-align: center; display: none; padding: 50px;">Cần ít nhất 4 từ để chơi.</div>
+    </div>
+</main>
+
 <script>
     // === CẤU HÌNH FIREBASE CỦA BẠN ===
+    // Dán đường dẫn Realtime Database của bạn vào đây (Nhớ giữ nguyên / ở cuối hoặc không có đều được)
     const FIREBASE_URL = 'https://tiengnga-4996e-default-rtdb.asia-southeast1.firebasedatabase.app';
     // =================================
 
@@ -9,7 +255,7 @@
     let score = 0;
     let currentQuizWord = "";
 
-    // Tự động tải dữ liệu khi mở web
+    // Tự động tải dữ liệu khi vừa khởi động trang web
     window.onload = async () => {
         await loadRemoteData();
     };
@@ -20,12 +266,10 @@
         tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">🔄 Đang tải từ điển từ Google Firebase...</td></tr>';
         
         try {
-            // Chúng ta thêm '.json' vào cuối link Firebase để gọi dữ liệu dạng API trực tiếp
             const response = await fetch(`${FIREBASE_URL}/vocabulary.json`);
             if (!response.ok) throw new Error('Lỗi kết nối Firebase');
             
             const data = await response.json();
-            // Nếu Firebase mới tinh chưa có dữ liệu, gán mặc định là mảng rỗng []
             words = data || []; 
             
             updateGroups();
@@ -39,15 +283,14 @@
         }
     }
 
-    // 2. Hàm lưu dữ liệu đè lên Firebase
+    // 2. Hàm lưu và đồng bộ dữ liệu đè lên Firebase
     async function save() {
-        // Luôn lưu một bản dự phòng tại máy đang dùng cho an toàn
+        // Lưu tạm một bản dự phòng cục bộ ở trình duyệt đang dùng
         localStorage.setItem('rusWords', JSON.stringify(words));
         updateGroups();
         renderTable();
 
         try {
-            // Gửi đè toàn bộ mảng từ vựng mới lên nhánh 'vocabulary' trên Firebase
             const response = await fetch(`${FIREBASE_URL}/vocabulary.json`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -61,7 +304,7 @@
         }
     }
 
-    // Hàm hỗ trợ tự động xử lý dấu sắc thành ký tự trọng âm tiếng Nga (\u0301)
+    // Hàm hỗ trợ tự động xử lý ký tự dấu sắc ' thành ký tự trọng âm tiếng Nga \u0301
     function convertToRussianAccent(text) {
         return text.replace(/([аеиоуыэюяаеиоуыэюя])'/gi, '$1\u0301');
     }
@@ -73,9 +316,9 @@
         const g = document.getElementById('groupInput').value.trim() || 'Chưa phân loại';
         
         if (r && v) {
-            r = convertToRussianAccent(r); // Tự động đánh trọng âm nếu có dấu ' sau nguyên âm
+            r = convertToRussianAccent(r); // Tự động chèn ký tự trọng âm
             words.push({ rus: r, vie: v, group: g });
-            save(); // Tự động đồng bộ lên Firebase
+            save(); // Đồng bộ ngay lên Firebase
             document.getElementById('rusInput').value = '';
             document.getElementById('vieInput').value = '';
             document.getElementById('rusInput').focus();
@@ -100,7 +343,7 @@
             }
         });
         if(count > 0) {
-            save(); // Tự động đồng bộ lên Firebase
+            save(); // Đồng bộ ngay lên Firebase
             document.getElementById('bulkInput').value = '';
             alert(`Đã thêm và đồng bộ thành công ${count} từ!`);
         }
@@ -142,6 +385,7 @@
 
     // --- Speech (Google TTS API) ---
     function speak(text) {
+        // Tận dụng API mượt mà của Google Dịch
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru&client=tw-ob&q=${encodeURIComponent(text)}`;
         const audio = new Audio(url);
         audio.play().catch(error => console.error("Không thể phát âm thanh:", error));
@@ -258,3 +502,5 @@
         if (id === 'quiz') initQuiz();
     }
 </script>
+</body>
+</html>
