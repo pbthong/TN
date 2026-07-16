@@ -385,11 +385,45 @@
 
     // --- Speech (Google TTS API) ---
     function speak(text) {
-        // Tận dụng API mượt mà của Google Dịch
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru&client=tw-ob&q=${encodeURIComponent(text)}`;
-        const audio = new Audio(url);
-        audio.play().catch(error => console.error("Không thể phát âm thanh:", error));
+    if (!text || text.trim() === "" || text === "...") {
+        console.warn("Không có từ vựng nào để phát âm!");
+        return;
     }
+    
+    // 1. Làm sạch nguyên âm tiếng Nga: loại bỏ hoàn toàn các ký tự dấu trọng âm Unicode (\u0301) 
+    // để Google Dịch nhận diện chính xác từ gốc, tránh lỗi định dạng file phát âm.
+    const cleanText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/'/g, "");
+
+    // 2. Sử dụng đúng endpoint API chuẩn của Google dịch hỗ trợ gọi từ trình duyệt web
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ru&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+    
+    // 3. Khởi tạo đối tượng Audio với thuộc tính giảm thiểu tối đa việc bị trình duyệt chặn tải
+    const audio = new Audio();
+    audio.src = url;
+    audio.crossOrigin = "anonymous"; // Tránh lỗi bảo mật CORS trên một số trình duyệt
+    
+    audio.play().catch(error => {
+        console.error("Không thể phát âm thanh:", error);
+        
+        // PHƯƠNG ÁN DỰ PHÒNG: Nếu Google TTS API vẫn bị trình duyệt hoặc mạng chặn, 
+        // hệ thống sẽ tự động chuyển sang giọng đọc mặc định chất lượng cao của thiết bị (Web Speech API)
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'ru-RU';
+            
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => 
+                voice.lang.includes('ru') && 
+                (voice.name.includes('Google') || voice.name.includes('Natural'))
+            ) || voices.find(voice => voice.lang.includes('ru'));
+
+            if (preferredVoice) utterance.voice = preferredVoice;
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+    });
+}
     function playCurrentWord() { if (filtered[currentIndex]) speak(filtered[currentIndex].rus); }
     function playQuizWord() { if (currentQuizWord) speak(currentQuizWord); }
 
